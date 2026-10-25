@@ -1,0 +1,7 @@
+<?php
+require_once __DIR__ . '/../src/bootstrap.php'; require_login();
+$sql='SELECT u.username,COALESCE(SUM(f.points),0) score,COUNT(DISTINCT s.flag_key) solved FROM users u LEFT JOIN submissions s ON s.user_id=u.id LEFT JOIN flags f ON f.flag_key=s.flag_key WHERE u.role=? GROUP BY u.id,u.username ORDER BY score DESC,solved DESC,u.username ASC';
+$st=db()->prepare($sql);$st->execute(['student']);$rows=$st->fetchAll();
+$totalLabs=(int)db()->query('SELECT COUNT(*) FROM flags')->fetchColumn();
+?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scoreboard | ICSS</title><link rel="stylesheet" href="/assets/style.css"></head><body><header class="top"><a class="brand" href="/dashboard.php"><span class="mark">IC</span><div><b>ICSS SECURITY LAB</b><small>CLASS SCOREBOARD</small></div></a><a href="/dashboard.php">Dashboard</a></header><main class="wrap page narrow"><p class="eyebrow">CLASSROOM PROGRESS</p><h1>Scoreboard</h1><table class="scores"><thead><tr><th>Rank</th><th>Student</th><th>Flags</th><th>Points</th><th>Achievement</th></tr></thead><tbody><?php foreach($rows as $i=>$r): ?><tr><td><?= $i+1 ?></td><td><?=h($r['username'])?></td><td><?=(int)$r['solved']?></td><td><?=(int)$r['score']?></td><td><?=(int)$r['score'] >= 60 ? '🏅 Passed' : 'In progress'?></td></tr><?php endforeach; ?></tbody></table><p class="fine">Scores reflect accepted flags. Avoid publishing student emails or other personal details.</p></main><footer>ICSS WAPT CTF</footer></body></html>

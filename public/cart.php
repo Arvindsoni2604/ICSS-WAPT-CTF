@@ -1,0 +1,44 @@
+<?php
+require_once __DIR__ . '/../src/bootstrap.php';
+if ($_SERVER['REQUEST_METHOD']==='POST') {
+ csrf_check(); $action=(string)($_POST['action']??''); $id=(int)($_POST['product_id']??0);
+ if ($action==='add' && $id>0) { $st=db()->prepare('SELECT id FROM products WHERE id=?'); $st->execute([$id]); if($st->fetch()) { $_SESSION['cart'][$id]=min(20,(int)($_SESSION['cart'][$id]??0)+1); flash('Product added to your cart.'); } }
+ if ($action==='remove' && $id>0) { unset($_SESSION['cart'][$id]); flash('Item removed from cart.'); }
+ if ($action==='checkout') {
+   require_login();
+   $cart=$_SESSION['cart']??[];
+   if (!$cart) flash('Your cart is empty.');
+   else {
+     try {
+       $pdo=db(); $pdo->beginTransaction(); $total=0; $rows=[]; $priceTampered=false;
+       $walletStmt=$pdo->prepare('SELECT wallet_balance, role FROM users WHERE id=? FOR UPDATE'); $walletStmt->execute([(int)$_SESSION['user_id']]); $wallet=$walletStmt->fetch(); if(!$wallet) throw new RuntimeException('Account not found.'); $unlimited=($wallet['role']==='super_admin');
+       foreach($cart as $pid=>$qty) { $st=$pdo->prepare('SELECT id,price,stock FROM products WHERE id=? FOR UPDATE'); $st->execute([(int)$pid]); $pr=$st->fetch(); if(!$pr || $qty<1 || $qty>$pr['stock']) throw new RuntimeException('An item is unavailable.'); $authoritative=(float)$pr['price'];
+         // INTENTIONALLY VULNERABLE TRAINING TARGET: checkout trusts the client-supplied unit_price.
+         $submitted=(isset($_POST['unit_price'][$pid]) && is_numeric($_POST['unit_price'][$pid])) ? (float)$_POST['unit_price'][$pid] : $authoritative;
+         if ($submitted < $authoritative) $priceTampered=true;
+         $accepted=max(0.01, $submitted);
+         $total += $accepted * (int)$qty;
+         $rows[]=['id'=>(int)$pid,'qty'=>(int)$qty,'price'=>$accepted]; }
+       if (!$unlimited && (float)$wallet['wallet_balance'] < $total) throw new RuntimeException('Insufficient wallet balance. Add funds through your instructor or choose a lower-cost item.');
+       if (!$unlimited) { $deduct=$pdo->prepare('UPDATE users SET wallet_balance=wallet_balance-? WHERE id=? AND wallet_balance>=?'); $deduct->execute([$total,(int)$_SESSION['user_id'],$total]); if($deduct->rowCount()!==1) throw new RuntimeException('Insufficient wallet balance.'); }
+       $st=$pdo->prepare('INSERT INTO orders(user_id,total,status) VALUES(?,?,?)'); $st->execute([$_SESSION['user_id'],$total,'Simulated - no payment']); $order=(int)$pdo->lastInsertId();
+       $it=$pdo->prepare('INSERT INTO order_items(order_id,product_id,quantity,unit_price) VALUES(?,?,?,?)');
+       foreach($rows as $r) $it->execute([$order,$r['id'],$r['qty'],$r['price']]);
+       $pdo->commit(); $_SESSION['cart']=[];
+       if ($priceTampered) {
+         // Classroom-only price-manipulation flag: disclose only after a lower client price was accepted and the demo order committed.
+         $flagValue='ICSS{Price_manupulation_success}';
+         $fs=$pdo->prepare('INSERT INTO flags(flag_key,flag_value,title,points) VALUES(?,?,?,10) ON DUPLICATE KEY UPDATE flag_value=VALUES(flag_value), title=VALUES(title), points=VALUES(points)');
+         $fs->execute(['design',$flagValue,'A04:2021 Insecure Design — Checkout price manipulation']);
+         $_SESSION['cart_discovered_flag']=['key'=>'design','value'=>$flagValue,'total'=>$total];
+         flash('Demo order placed. The checkout accepted the submitted unit price instead of recalculating it from the product record. No real payment was processed.');
+       } else { flash('Demo order placed successfully. No payment was processed.'); }
+     } catch(Throwable $e) { if(isset($pdo) && $pdo->inTransaction()) $pdo->rollBack(); flash($e instanceof RuntimeException ? $e->getMessage() : 'Could not place demo order. Please review your cart.'); error_log('Demo checkout: '.$e->getMessage()); }
+   }
+ }
+ header('Location: /cart.php'); exit;
+}
+$cart=$_SESSION['cart']??[]; $items=[]; $total=0;
+if($cart) { $ids=array_map('intval',array_keys($cart)); $q=implode(',',array_fill(0,count($ids),'?')); $st=db()->prepare("SELECT id,name,price FROM products WHERE id IN ($q)"); $st->execute($ids); foreach($st->fetchAll() as $p){$p['qty']=(int)$cart[$p['id']];$p['subtotal']=(float)$p['price']*$p['qty'];$total+=$p['subtotal'];$items[]=$p;} }
+?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your cart | ICSS Market</title><link rel="stylesheet" href="/assets/style.css"></head><body><header class="top"><a class="brand" href="/"><span class="mark">IC</span><div><b>ICSS MARKET</b><small>YOUR CART</small></div></a><nav><a href="/shop.php">Continue shopping</a><a href="/dashboard.php">Dashboard</a><?php if(logged_in()): ?><span class="pill">Wallet: <?=h(wallet_display())?></span><?php endif; ?></nav></header><main class="wrap page narrow"><p class="eyebrow">DEMO CHECKOUT</p><h1>Your cart</h1><?php show_flash(); ?><?php if(!empty($_SESSION['cart_discovered_flag'])): $discovered=$_SESSION['cart_discovered_flag']; ?><div id="priceFlagModal" class="flag-modal" role="dialog" aria-modal="true" aria-labelledby="priceFlagTitle"><div class="flag-modal-card"><button type="button" class="flag-modal-close" aria-label="Close" onclick="document.getElementById('priceFlagModal').hidden=true">×</button><p class="eyebrow">LAB CONDITION VERIFIED</p><h2 id="priceFlagTitle">Price manipulation detected</h2><p>The checkout accepted a client-submitted price instead of validating the authoritative product price.</p><div class="flag-value"><span>Discovered flag</span><code><?=h((string)$discovered['value'])?></code></div><p class="fine">Enter the flag below to submit it and earn 10 points.</p><form method="post" action="/submit-flag.php"><input type="hidden" name="csrf" value="<?=h(csrf_token())?>"><input type="hidden" name="flag_lab_key" value="design"><label for="price-lab-flag">Submit discovered flag</label><input id="price-lab-flag" name="flag" placeholder="Enter the discovered flag" autocomplete="off" required><button class="button primary full" type="submit">Submit flag · 10 points</button></form></div></div><style>.flag-modal{position:fixed;inset:0;z-index:9999;background:rgba(12,24,40,.68);display:flex;align-items:center;justify-content:center;padding:20px}.flag-modal[hidden]{display:none}.flag-modal-card{position:relative;width:min(520px,100%);background:#fff;color:#172b45;border-radius:16px;padding:30px;box-shadow:0 24px 80px #0004}.flag-modal-card h2{margin:8px 0 12px}.flag-modal-close{position:absolute;right:14px;top:10px;border:0;background:transparent;font-size:28px;cursor:pointer}.flag-value{display:grid;gap:8px;background:#eaf8f1;border:1px solid #a6dfc1;border-radius:10px;padding:14px;margin:18px 0;overflow-wrap:anywhere}.flag-value span{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#356450}.flag-modal-card input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ccd5e0;border-radius:8px;margin:8px 0 14px}</style><script>document.addEventListener('keydown',function(e){if(e.key==='Escape'){const m=document.getElementById('priceFlagModal');if(m)m.hidden=true;}});</script><?php unset($_SESSION['cart_discovered_flag']); endif; ?><?php if(!$items): ?><div class="empty"><h2>Your cart is empty</h2><p class="muted">Explore the demo store and add a product.</p><a class="button primary" href="/shop.php">Browse shop</a></div><?php else: ?><div class="cart-list"><?php foreach($items as $p): ?><div class="cart-row"><div><h3><?=h($p['name'])?></h3><p class="muted">Quantity: <?=(int)$p['qty']?> · Listed price: ₹<?=number_format((float)$p['price'],2)?> each</p><p class="muted">Unit price: ₹<?=number_format((float)$p['price'],2)?></p></div><strong>₹<?=number_format((float)$p['subtotal'],2)?></strong><form method="post"><input type="hidden" name="csrf" value="<?=h(csrf_token())?>"><input type="hidden" name="action" value="remove"><input type="hidden" name="product_id" value="<?=(int)$p['id']?>"><button class="button ghost" type="submit">Remove</button></form></div><?php endforeach; ?><div class="cart-total"><span>Total (demo)</span><strong>₹<?=number_format($total,2)?></strong></div><form id="checkout-form" method="post"><input type="hidden" name="csrf" value="<?=h(csrf_token())?>"><input type="hidden" name="action" value="checkout"><?php foreach($items as $p): ?><input type="hidden" name="unit_price[<?=(int)$p['id']?>]" value="<?=number_format((float)$p['price'],2,'.','')?>"><?php endforeach; ?><button class="button primary full" type="submit">Continue to secure checkout</button></form><p class="fine">Classroom simulation only. Checkout deducts from your demo wallet; no real payment is taken.</p></div><?php endif; ?></main><footer>ICSS Market · No real payments</footer></body></html>

@@ -1,0 +1,148 @@
+<?php
+require_once __DIR__ . '/../src/bootstrap.php'; require_login();
+$map=[
+'x_idor'=>['category'=>'A01:2025 Broken Access Control','title'=>'IDOR','group'=>'15'],
+'x_bola'=>['category'=>'A01:2025 Broken Access Control','title'=>'BOLA','group'=>'15'],
+'x_privilege-escalation'=>['category'=>'A01:2025 Broken Access Control','title'=>'Privilege Escalation','group'=>'15'],
+'x_forced-browsing'=>['category'=>'A01:2025 Broken Access Control','title'=>'Forced Browsing','group'=>'15'],
+'x_function-authorization'=>['category'=>'A01:2025 Broken Access Control','title'=>'Function Authorization','group'=>'15'],
+'x_tenant-isolation'=>['category'=>'A01:2025 Broken Access Control','title'=>'Tenant Isolation','group'=>'15'],
+'x_ssrf'=>['category'=>'A01:2025 Broken Access Control','title'=>'SSRF','group'=>'15'],
+'x_cors'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'CORS','group'=>'16'],
+'x_security-headers'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'Security Headers','group'=>'16'],
+'x_debug-exposure'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'Debug Exposure','group'=>'16'],
+'x_default-configuration'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'Default Configuration','group'=>'16'],
+'x_tls-configuration'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'TLS Configuration','group'=>'16'],
+'x_cloud-configuration'=>['category'=>'A02:2025 Security Misconfiguration','title'=>'Cloud Configuration','group'=>'16'],
+'x_dependency-inventory'=>['category'=>'A03:2025 Supply Chain','title'=>'Dependency Inventory','group'=>'17'],
+'x_dependency-confusion'=>['category'=>'A03:2025 Supply Chain','title'=>'Dependency Confusion','group'=>'17'],
+'x_ci-cd-exposure'=>['category'=>'A03:2025 Supply Chain','title'=>'CI/CD Exposure','group'=>'17'],
+'x_third-party-components'=>['category'=>'A03:2025 Supply Chain','title'=>'Third-party Components','group'=>'17'],
+'x_sensitive-data-protection'=>['category'=>'A04:2025 Cryptographic Failures','title'=>'Sensitive Data Protection','group'=>'18'],
+'x_weak-incorrect-cryptography'=>['category'=>'A04:2025 Cryptographic Failures','title'=>'Weak/Incorrect Cryptography','group'=>'18'],
+'x_plaintext-secrets'=>['category'=>'A04:2025 Cryptographic Failures','title'=>'Plaintext Secrets','group'=>'18'],
+'x_sql-injection'=>['category'=>'A05:2025 Injection','title'=>'SQL Injection','group'=>'19'],
+'x_nosql-injection'=>['category'=>'A05:2025 Injection','title'=>'NoSQL Injection','group'=>'19'],
+'x_cross-site-scripting-xss'=>['category'=>'A05:2025 Injection','title'=>'Cross-Site Scripting (XSS)','group'=>'19'],
+'x_command-injection'=>['category'=>'A05:2025 Injection','title'=>'Command Injection','group'=>'19'],
+'x_ldap-injection'=>['category'=>'A05:2025 Injection','title'=>'LDAP Injection','group'=>'19'],
+'x_xpath-injection'=>['category'=>'A05:2025 Injection','title'=>'XPath Injection','group'=>'19'],
+'x_server-side-template-injection-ssti'=>['category'=>'A05:2025 Injection','title'=>'Server-Side Template Injection (SSTI)','group'=>'19'],
+'x_expression-injection'=>['category'=>'A05:2025 Injection','title'=>'Expression Injection','group'=>'19'],
+'x_business-logic'=>['category'=>'A06:2025 Insecure Design','title'=>'Business Logic','group'=>'20'],
+'x_race-conditions'=>['category'=>'A06:2025 Insecure Design','title'=>'Race Conditions','group'=>'20'],
+'x_workflow-abuse'=>['category'=>'A06:2025 Insecure Design','title'=>'Workflow Abuse','group'=>'20'],
+'x_threat-modeling'=>['category'=>'A06:2025 Insecure Design','title'=>'Threat Modeling','group'=>'20'],
+'x_login-controls'=>['category'=>'A07:2025 Authentication','title'=>'Login Controls','group'=>'21'],
+'x_password-reset'=>['category'=>'A07:2025 Authentication','title'=>'Password Reset','group'=>'21'],
+'x_mfa'=>['category'=>'A07:2025 Authentication','title'=>'MFA','group'=>'21'],
+'x_session-management'=>['category'=>'A07:2025 Authentication','title'=>'Session Management','group'=>'21'],
+'x_jwt-validation'=>['category'=>'A07:2025 Authentication','title'=>'JWT Validation','group'=>'21'],
+'x_oauth'=>['category'=>'A07:2025 Authentication','title'=>'OAuth','group'=>'21'],
+'x_oidc'=>['category'=>'A07:2025 Authentication','title'=>'OIDC','group'=>'21'],
+'x_saml'=>['category'=>'A07:2025 Authentication','title'=>'SAML','group'=>'21'],
+'x_deserialization'=>['category'=>'A08:2025 Software or Data Integrity Failures','title'=>'Deserialization','group'=>'22'],
+'x_prototype-pollution'=>['category'=>'A08:2025 Software or Data Integrity Failures','title'=>'Prototype Pollution','group'=>'22'],
+'x_update-integrity'=>['category'=>'A08:2025 Software or Data Integrity Failures','title'=>'Update Integrity','group'=>'22'],
+'x_audit-events'=>['category'=>'A09:2025 Logging & Alerting','title'=>'Audit Events','group'=>'23'],
+'x_alerting-and-detection'=>['category'=>'A09:2025 Logging & Alerting','title'=>'Alerting and Detection','group'=>'23'],
+'x_error-handling'=>['category'=>'A10:2025 Mishandling of Exceptional Conditions','title'=>'Error Handling','group'=>'24'],
+'x_fail-open-behavior'=>['category'=>'A10:2025 Mishandling of Exceptional Conditions','title'=>'Fail-open Behavior','group'=>'24'],
+'x_resource-exhaustion-controls'=>['category'=>'A10:2025 Mishandling of Exceptional Conditions','title'=>'Resource Exhaustion Controls','group'=>'24'],
+'x_csrf'=>['category'=>'Client-Side Security','title'=>'CSRF','group'=>'25'],
+'x_dom-xss'=>['category'=>'Client-Side Security','title'=>'DOM XSS','group'=>'25'],
+'x_clickjacking'=>['category'=>'Client-Side Security','title'=>'Clickjacking','group'=>'25'],
+'x_postmessage-trust'=>['category'=>'Client-Side Security','title'=>'postMessage Trust','group'=>'25'],
+'x_dom-clobbering'=>['category'=>'Client-Side Security','title'=>'DOM Clobbering','group'=>'25'],
+'x_file-upload'=>['category'=>'File Security','title'=>'File Upload','group'=>'26'],
+'x_path-traversal'=>['category'=>'File Security','title'=>'Path Traversal','group'=>'26'],
+'x_local-file-inclusion-lfi'=>['category'=>'File Security','title'=>'Local File Inclusion (LFI)','group'=>'26'],
+'x_remote-file-inclusion-rfi'=>['category'=>'File Security','title'=>'Remote File Inclusion (RFI)','group'=>'26'],
+'x_archive-extraction'=>['category'=>'File Security','title'=>'Archive Extraction','group'=>'26'],
+'x_xxe'=>['category'=>'XML Security','title'=>'XXE','group'=>'27'],
+'x_xpath'=>['category'=>'XML Security','title'=>'XPath','group'=>'27'],
+'x_xml-entity-expansion'=>['category'=>'XML Security','title'=>'XML Entity Expansion','group'=>'27']];
+$id=(string)($_GET['id']??''); if(!isset($map[$id])){http_response_code(404);exit('Not found');}
+$info=$map[$id]; $title=$info['title']; $category=$info['category']; $msg=''; $found=false;
+// These checks model vulnerability outcomes using inert, fictional data. No shell, filesystem, external URL, XML entity, or real identity provider is invoked.
+$input=(string)($_GET['q']??$_GET['ref']??$_GET['file']??$_GET['url']??$_GET['next']??$_POST['value']??$_POST['payload']??$_POST['username']??'');
+$body=(string)($_POST['payload']??$_POST['value']??'');
+$conditions=[
+'x_idor'=>fn()=>isset($_GET['ref']) && $_GET['ref']==='record-204',
+'x_bola'=>fn()=>isset($_GET['ref']) && $_GET['ref']==='account-204',
+'x_privilege-escalation'=>fn()=>isset($_POST['role']) && $_POST['role']==='admin',
+'x_forced-browsing'=>fn()=>isset($_GET['page']) && $_GET['page']==='internal-report',
+'x_function-authorization'=>fn()=>isset($_GET['action']) && $_GET['action']==='export-all',
+'x_tenant-isolation'=>fn()=>isset($_GET['tenant']) && $_GET['tenant']==='tenant-blue',
+'x_ssrf'=>fn()=>isset($_GET['url']) && $_GET['url']==='http://lab-internal/metadata',
+'x_cors'=>fn()=>isset($_GET['origin']) && $_GET['origin']==='https://untrusted.example.test',
+'x_security-headers'=>fn()=>isset($_GET['view']) && $_GET['view']==='raw-response',
+'x_debug-exposure'=>fn()=>isset($_GET['mode']) && $_GET['mode']==='debug',
+'x_default-configuration'=>fn()=>isset($_GET['page']) && $_GET['page']==='sample-config',
+'x_tls-configuration'=>fn()=>isset($_GET['view']) && $_GET['view']==='legacy-tls',
+'x_cloud-configuration'=>fn()=>isset($_GET['resource']) && $_GET['resource']==='demo-public-bucket',
+'x_dependency-inventory'=>fn()=>isset($_GET['view']) && $_GET['view']==='manifest',
+'x_dependency-confusion'=>fn()=>isset($_POST['package']) && $_POST['package']==='northstar-internal-demo',
+'x-ci-cd-exposure'=>fn()=>isset($_GET['file']) && $_GET['file']==='pipeline-log',
+'x_third-party-components'=>fn()=>isset($_GET['component']) && $_GET['component']==='legacy-widget',
+'x_sensitive-data-protection'=>fn()=>isset($_GET['field']) && $_GET['field']==='private-note',
+'x_weak-incorrect-cryptography'=>fn()=>isset($_GET['view']) && $_GET['view']==='crypto-report',
+'x_plaintext-secrets'=>fn()=>isset($_GET['field']) && $_GET['field']==='api-secret',
+'x_sql-injection'=>fn()=>isset($_GET['q']) && preg_match("/(' OR '1'='1|1\\s*=\\s*1)/i",(string)$_GET['q']),
+'x_nosql-injection'=>fn()=>isset($_POST['payload']) && str_contains((string)$_POST['payload'],'$ne'),
+'x_cross-site-scripting-xss'=>fn()=>isset($_GET['q']) && preg_match('/<script>/i',(string)$_GET['q']),
+'x_command-injection'=>fn()=>isset($_POST['value']) && str_contains((string)$_POST['value'],';'),
+'x_ldap-injection'=>fn()=>isset($_GET['q']) && str_contains((string)$_GET['q'],'*)(uid=*'),
+'x_xpath-injection'=>fn()=>isset($_GET['q']) && str_contains((string)$_GET['q'],"' or '1'='1"),
+'x_server-side-template-injection-ssti'=>fn()=>isset($_GET['q']) && str_contains((string)$_GET['q'],'{{7*7}}'),
+'x_expression-injection'=>fn()=>isset($_GET['q']) && str_contains((string)$_GET['q'],'${7*7}'),
+'x_business-logic'=>fn()=>isset($_POST['discount']) && (float)$_POST['discount']>20,
+'x_race-conditions'=>fn()=>isset($_POST['action']) && $_POST['action']==='redeem-twice',
+'x_workflow-abuse'=>fn()=>isset($_POST['stage']) && $_POST['stage']==='approved',
+'x_threat-modeling'=>fn()=>isset($_GET['view']) && $_GET['view']==='trust-boundaries',
+'x_login-controls'=>fn()=>isset($_POST['username']) && $_POST['username']==='demo-admin',
+'x_password-reset'=>fn()=>isset($_GET['user']) && $_GET['user']==='demo-admin',
+'x_mfa'=>fn()=>isset($_POST['mfa']) && $_POST['mfa']==='000000',
+'x_session-management'=>fn()=>isset($_GET['view']) && $_GET['view']==='session-metadata',
+'x_jwt-validation'=>fn()=>isset($_GET['token']) && $_GET['token']==='unsigned-demo-token',
+'x_oauth'=>fn()=>isset($_GET['view']) && $_GET['view']==='oauth-redirect',
+'x_oidc'=>fn()=>isset($_GET['view']) && $_GET['view']==='oidc-discovery',
+'x_saml'=>fn()=>isset($_GET['view']) && $_GET['view']==='saml-metadata',
+'x_deserialization'=>fn()=>isset($_POST['payload']) && str_contains((string)$_POST['payload'],'DEMO_OBJECT'),
+'x_prototype-pollution'=>fn()=>isset($_POST['payload']) && str_contains((string)$_POST['payload'],'__proto__'),
+'x_update-integrity'=>fn()=>isset($_POST['version']) && $_POST['version']==='unsigned-demo-update',
+'x_audit-events'=>fn()=>isset($_GET['view']) && $_GET['view']==='audit-gap',
+'x_alerting-and-detection'=>fn()=>isset($_GET['view']) && $_GET['view']==='alert-test',
+'x_error-handling'=>fn()=>isset($_GET['view']) && $_GET['view']==='verbose-error',
+'x_fail-open-behavior'=>fn()=>isset($_GET['mode']) && $_GET['mode']==='dependency-down',
+'x_resource-exhaustion-controls'=>fn()=>isset($_GET['view']) && $_GET['view']==='rate-limit-status',
+'x_csrf'=>fn()=>isset($_POST['action']) && $_POST['action']==='change-email',
+'x_dom-xss'=>fn()=>isset($_GET['q']) && preg_match('/<img/i',(string)$_GET['q']),
+'x_clickjacking'=>fn()=>isset($_GET['view']) && $_GET['view']==='embed-preview',
+'x_postmessage-trust'=>fn()=>isset($_GET['view']) && $_GET['view']==='message-origin',
+'x_dom-clobbering'=>fn()=>isset($_GET['view']) && $_GET['view']==='dom-state',
+'x_file-upload'=>fn()=>isset($_POST['filename']) && str_ends_with(strtolower((string)$_POST['filename']),'.php'),
+'x_path-traversal'=>fn()=>isset($_GET['file']) && str_contains((string)$_GET['file'],'../'),
+'x_local-file-inclusion-lfi'=>fn()=>isset($_GET['page']) && str_contains((string)$_GET['page'],'../'),
+'x_remote-file-inclusion-rfi'=>fn()=>isset($_GET['page']) && str_starts_with((string)$_GET['page'],'http://'),
+'x_archive-extraction'=>fn()=>isset($_POST['filename']) && str_contains((string)$_POST['filename'],'../'),
+'x_xxe'=>fn()=>isset($_POST['payload']) && str_contains((string)$_POST['payload'],'<!ENTITY'),
+'x_xml-bomb'=>fn()=>isset($_POST['payload']) && str_contains((string)$_POST['payload'],'ENTITY demo'),
+];
+if($_SERVER['REQUEST_METHOD']==='POST') { csrf_check(); }
+try { if(isset($conditions[$id]) && $conditions[$id]()) { $found=true; } } catch(Throwable $e) { $found=false; }
+// Points are weighted by estimated impact and testing complexity. These are classroom scoring weights, not CVSS scores.
+$pointWeights = array_fill_keys(array_keys($map), 10); // Every extended lab is worth exactly 10 points.
+if($found){$flag='ICSS{'.substr($id,2).'_condition_verified}';$key=$id;$points=(int)($pointWeights[$id]??5);$s=db()->prepare('INSERT INTO flags(flag_key,flag_value,title,points) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title), points=VALUES(points)');$s->execute([$key,$flag,$category.' — '.$title,$points]);}
+// Generic site feature. The page itself does not name parameter paths or provide payload guidance.
+$features=['search'=>'Search the catalogue','profile'=>'Account preferences','orders'=>'Order history','service'=>'Service information','support'=>'Customer support','files'=>'Document center','integrations'=>'Connected services','checkout'=>'Basket and checkout','import'=>'Content import'];
+$featureNames=['x_sql-injection'=>'search','x_nosql-injection'=>'search','x_cross-site-scripting-xss'=>'search','x_ldap-injection'=>'search','x_xpath-injection'=>'search','x_server-side-template-injection-ssti'=>'search','x_expression-injection'=>'search','x_dom-xss'=>'search','x_idor'=>'orders','x_bola'=>'profile','x_tenant-isolation'=>'profile','x_ssrf'=>'integrations','x_file-upload'=>'files','x_path-traversal'=>'files','x_local-file-inclusion-lfi'=>'files','x_remote-file-inclusion-rfi'=>'files','x_archive-extraction'=>'files','x_business-logic'=>'checkout'];
+$feature=$features[$featureNames[$id]??'service'];
+function esc($s){return h((string)$s);} $query=esc($_GET['q']??'');
+?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=esc($title)?> | Northstar</title><link rel="stylesheet" href="/assets/style.css"><style>body{background:#f5f7fa;color:#243246}.head{background:#fff;border-bottom:1px solid #e1e7ef;padding:18px max(24px,calc((100% - 1120px)/2));display:flex;justify-content:space-between}.head a{color:#243246;text-decoration:none;margin-right:18px}.main{max-width:1120px;margin:34px auto;padding:0 24px}.panel{background:#fff;border:1px solid #e0e6ee;border-radius:13px;padding:28px;margin:18px 0}.panel input,.panel textarea,.panel select{box-sizing:border-box;width:100%;padding:12px;margin:8px 0 15px;border:1px solid #cbd5e1;border-radius:7px}.quiet{color:#66758a}.flag{background:#e9f8f0;border:1px solid #9ed8bc;padding:14px;border-radius:9px}</style></head><body><header class="head"><a href="/shop.php"><b>NORTHSTAR</b></a><nav><a href="/shop.php">Store</a><a href="/dashboard.php">My account</a><a href="/extended-labs.php">Services</a></nav></header><main class="main"><p class="quiet">NORTHSTAR CUSTOMER PORTAL / <?=esc($feature)?></p><h1><?=esc($feature)?></h1><p class="quiet">Manage your account and use our online services.</p><section class="panel"><h2><?=esc($title)?></h2><p class="quiet">Customer service is available. Reference your account or request below.</p>
+<form method="get" action="/extended-lab.php"><input type="hidden" name="id" value="<?=esc($id)?>"><label>Search or reference</label><input name="q" value="<?=$query?>" placeholder="Search services"><button class="button primary">Continue</button></form>
+<form method="post" action="/extended-lab.php?id=<?=esc($id)?>"><input type="hidden" name="csrf" value="<?=esc(csrf_token())?>"><label>Request details</label><input name="value" placeholder="Enter request details"><textarea name="payload" rows="3" placeholder="Additional information"></textarea><button class="button ghost">Submit request</button></form>
+<?php if(isset($_GET['view'])||isset($_GET['page'])||isset($_GET['ref'])||isset($_GET['file'])||isset($_GET['url'])||isset($_GET['field'])||isset($_GET['token'])||isset($_GET['tenant'])||isset($_GET['origin'])||isset($_GET['component'])||isset($_GET['mode'])): ?><div class="notice"><b>Service response</b><p>Request processed by the Northstar demo service. Review the response and behavior.</p><pre><?=esc(json_encode(['status'=>'ok','reference'=>'NS-'.substr(sha1($id),0,6),'service'=>'demo','data'=>'fictional'],JSON_PRETTY_PRINT))?></pre></div><?php endif; ?>
+<?php if($found): ?><div class="flag"><b>Vulnerability condition verified.</b><p>Flag discovered: <code>ICSS{<?=esc(substr($id,2))?>_condition_verified}</code></p></div><?php endif; ?>
+<div class="panel" id="submit-flag" style="margin-top:24px;border-top:1px solid #e0e6ee"><h2>Submit lab flag</h2><p class="quiet">Enter the flag you discovered during your assessment. Each extended lab is worth 10 points. Flags are accepted only after the server has registered the lab condition.</p><form method="post" action="/submit-flag.php"><input type="hidden" name="csrf" value="<?=esc(csrf_token())?>"><input type="hidden" name="flag_lab_key" value="<?=esc($id)?>"><label for="lab-flag">Discovered flag</label><input id="lab-flag" name="flag" placeholder="ICSS{...}" autocomplete="off" required><button class="button primary" type="submit">Submit flag · 10 points</button></form></div></section><p class="quiet">Northstar Services · Privacy · Terms · Fictional classroom environment</p></main></body></html>

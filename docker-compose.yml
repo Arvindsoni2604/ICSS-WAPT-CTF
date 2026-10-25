@@ -1,0 +1,44 @@
+services:
+  web:
+    build: .
+    container_name: icss-market-web
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: icss_ctf
+      DB_USER: ctf_app
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - icssnet
+
+  db:
+    image: mysql:8.4
+    container_name: icss-market-db
+    environment:
+      MYSQL_DATABASE: icss_ctf
+      MYSQL_USER: ctf_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    volumes:
+      - icssdata:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 25
+    restart: unless-stopped
+    networks:
+      - icssnet
+    # Database port is deliberately not published to the host.
+
+networks:
+  icssnet:
+
+volumes:
+  icssdata:
